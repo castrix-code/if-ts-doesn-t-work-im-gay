@@ -7,6 +7,11 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const isValid = await verifyMuxSignature(req)
+    if (!isValid) {
+      return jsonResponse({ error: 'Invalid webhook signature' }, 403)
+    }
+
     const body = await req.json()
     const eventType = body.type as string
     const data = body.data
