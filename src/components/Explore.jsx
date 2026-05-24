@@ -11,6 +11,9 @@ const categories = [
 ]
 
 export default function Explore() {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const [searching, setSearching] = useState(false)
   return (
     <div className="min-h-screen bg-black px-4 pb-28 pt-6 sm:px-6">
       <div className="mx-auto max-w-2xl">
