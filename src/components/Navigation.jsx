@@ -20,22 +20,43 @@ export default function Navigation({ currentView, onNavigate }) {
 
           if (isCenter) {
             return (
-              <button key={item.key} onClick={() => onNavigate('upload')} className="relative -mt-5 flex flex-col items-center">
-                <motion.div whileTap={{ scale: 0.9 }} className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/30 ring-4 ring-black">
+              <button
+                key={item.key}
+                onClick={() => onNavigate('upload')}
+                className="relative -mt-5 flex flex-col items-center"
+              >
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/30 ring-4 ring-black">
                   <Plus className="h-6 w-6 text-white" strokeWidth={2.5} />
-                </motion.div>
+                </div>
                 <span className="mt-1 text-[10px] font-medium text-emerald-400">Upload</span>
               </button>
             )
           }
 
           return (
-            <button key={item.key} onClick={() => onNavigate(item.key)} className="relative flex min-w-[48px] flex-col items-center gap-0.5 py-2">
-              {isActive && <motion.div layoutId="bottom-nav-dot" className="absolute -top-1 h-1 w-1 rounded-full bg-emerald-400" transition={{ type: 'spring', bounce: 0.3, duration: 0.5 }} />}
+            <button
+              key={item.key}
+              onClick={() => onNavigate(item.key)}
+              className="relative flex min-w-[48px] flex-col items-center gap-0.5 py-2"
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="navIndicator"
+                  className="absolute -top-1 h-1 w-1 rounded-full bg-emerald-400"
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                />
+              )}
               <div className="flex h-10 w-10 items-center justify-center rounded-xl transition-colors">
-                <Icon className={`h-5 w-5 transition-colors ${isActive ? 'text-emerald-400' : 'text-white/35'}`} strokeWidth={isActive ? 2.2 : 1.8} />
+                <Icon
+                  className={`h-5 w-5 transition-colors ${isActive ? 'text-emerald-400' : 'text-white/35'}`}
+                  strokeWidth={isActive ? 2.2 : 1.8}
+                />
               </div>
-              <span className={`text-[10px] font-medium transition-colors ${isActive ? 'text-emerald-400' : 'text-white/35'}`}>{item.label}</span>
+              <span
+                className={`text-[10px] font-medium transition-colors ${isActive ? 'text-emerald-400' : 'text-white/35'}`}
+              >
+                {item.label}
+              </span>
             </button>
           )
         })}
