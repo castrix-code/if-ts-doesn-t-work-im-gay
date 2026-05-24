@@ -167,20 +167,24 @@ export default function VideoFeed({ onNavigate }) {
 
         {!loading &&
           videos.map((video, index) => (
-            <VideoCard
-              key={video.id}
-              video={video}
-              isActive={index === currentIndex}
-              onVideoEnded={() => setQuizVideo(video)}
-              onStartQuiz={() => setQuizVideo(video)}
-              onRemove={removeVideo}
-              onRefresh={refreshVideos}
-            />
-          ))}
+    const deleteFromDatabase = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return { ok: false, message: 'Not authenticated' }
 
-        {!loading && videos.length === 0 && (
-          <div className="flex h-screen items-center justify-center px-6">
-            <motion.div
+      const { data, error } = await supabase
+        .from('videos')
+        .delete()
+        .select()
+        .eq('id', video.id)
+        .eq('user_id', user.id)  // ← ensures only the owner can delete
+
+      if (error) {
+        console.error('Delete failed:', error)
+        return { ok: false, message: error.message || 'Delete failed' }
+      }
+
+      return { ok: true, data }
+    }
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="text-center max-w-sm"
