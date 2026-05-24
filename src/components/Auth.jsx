@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, supabaseEnabled } from '../lib/supabase'
 
 export default function Auth() {
   const [email, setEmail] = useState('')
@@ -25,6 +25,11 @@ export default function Auth() {
   }
 
   const handleGoogleLogin = async () => {
+    if (!supabaseEnabled) {
+      alert('Supabase is not configured. Copy .env.example to .env and add your Supabase keys.')
+      return
+    }
+
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.origin }
@@ -38,6 +43,11 @@ export default function Auth() {
           Atom
         </h1>
         <p className="text-indigo-400 text-center text-sm mb-8">Learn in atomic bytes</p>
+        { !supabaseEnabled && (
+          <div className="bg-red-500/10 border border-red-500/30 text-red-200 rounded-lg p-3 mb-4 text-sm">
+            Supabase is not configured, so login and signup are disabled. Copy <code className="bg-gray-900 px-1 rounded">.env.example</code> to <code className="bg-gray-900 px-1 rounded">.env</code> and add your Supabase keys.
+          </div>
+        ) }
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
@@ -60,10 +70,10 @@ export default function Auth() {
           
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !supabaseEnabled}
             className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-500 transition disabled:opacity-50"
           >
-            {loading ? 'Loading...' : (isLogin ? 'Login' : 'Sign Up')}
+            { !supabaseEnabled ? 'Supabase not configured' : loading ? 'Loading...' : (isLogin ? 'Login' : 'Sign Up') }
           </button>
         </form>
 

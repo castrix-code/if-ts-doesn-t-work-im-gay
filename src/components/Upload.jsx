@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { supabase, supabaseEnabled } from '../lib/supabase'
 import { invokeFunction } from '../lib/invokeFunction'
 import { uploadToMux } from '../lib/muxUpload'
 
@@ -12,6 +12,7 @@ export default function Upload() {
   const [progress, setProgress] = useState(0)
   const [statusMessage, setStatusMessage] = useState('')
   const [error, setError] = useState('')
+  const [user, setUser] = useState(null)
   const navigate = useNavigate()
 
   const handleFileChange = (e) => {
@@ -74,6 +75,50 @@ export default function Upload() {
     } finally {
       setUploading(false)
     }
+  }
+
+  useEffect(() => {
+    if (!supabaseEnabled) return
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user)
+    })
+  }, [])
+
+  if (!supabaseEnabled) {
+    return (
+      <div className="min-h-screen bg-black pt-8 pb-24 px-4">
+        <div className="max-w-2xl mx-auto">
+          <h1 className="text-3xl font-bold text-white mb-4">Upload</h1>
+          <div className="rounded-3xl border border-red-500/30 bg-red-500/5 p-6">
+            <h2 className="text-xl font-semibold text-white mb-2">Supabase not configured</h2>
+            <p className="text-gray-400 mb-4">
+              The upload feature requires Supabase. Add your credentials to <code className="bg-slate-900 px-2 py-1 rounded">.env</code> and restart the server.
+            </p>
+            <p className="text-sm text-slate-400">Your upload form will become available once the app can connect to Supabase.</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-black pt-8 pb-24 px-4">
+        <div className="max-w-2xl mx-auto">
+          <h1 className="text-3xl font-bold text-white mb-4">Upload</h1>
+          <div className="rounded-3xl border border-slate-700 bg-slate-900/80 p-6">
+            <p className="text-gray-300 mb-4">Please sign in to upload videos.</p>
+            <Link
+              to="/login"
+              className="inline-flex items-center justify-center rounded-full bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-500"
+            >
+              Sign in to continue
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

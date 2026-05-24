@@ -9,7 +9,7 @@ export default function Navigation() {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 py-3 px-6 z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur border-t border-slate-800 py-3 px-6 z-50">
       <div className="flex justify-around max-w-md mx-auto">
         <Link to="/" className={`flex flex-col items-center ${location.pathname === '/' ? 'text-indigo-400' : 'text-gray-500'}`}>
           <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">

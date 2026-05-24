@@ -1,10 +1,26 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import MuxPlayer from '@mux/mux-player-react'
 import { Brain, Trash2, Volume2, VolumeX } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { supabase, supabaseEnabled } from '../lib/supabase'
 import QuizModal from './QuizModal'
 
 export default function VideoFeed() {
+  if (!supabaseEnabled) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
+        <div className="max-w-xl text-center">
+          <h1 className="text-3xl font-bold mb-4">Supabase not configured</h1>
+          <p className="text-gray-300 mb-4">
+            The video feed and account system are disabled until you add your Supabase keys to <code className="bg-gray-900 px-2 py-1 rounded">.env</code>.
+          </p>
+          <p className="text-sm text-gray-500">
+            Copy <code className="bg-gray-900 px-2 py-1 rounded">.env.example</code> to <code className="bg-gray-900 px-2 py-1 rounded">.env</code>, set <code className="bg-gray-900 px-2 py-1 rounded">VITE_SUPABASE_URL</code> and <code className="bg-gray-900 px-2 py-1 rounded">VITE_SUPABASE_ANON_KEY</code>, then restart the dev server.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   const [videos, setVideos] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [quizVideo, setQuizVideo] = useState(null)
@@ -36,6 +52,10 @@ export default function VideoFeed() {
     setCurrentIndex(0)
     if (quizVideo?.id === videoId) setQuizVideo(null)
   }, [quizVideo?.id])
+
+  const refreshVideos = useCallback(() => {
+    fetchVideos()
+  }, [fetchVideos])
 
   useEffect(() => {
     fetchVideos()
@@ -85,6 +105,7 @@ export default function VideoFeed() {
               onVideoEnded={() => setQuizVideo(video)}
               onStartQuiz={() => setQuizVideo(video)}
               onRemove={removeVideo}
+              onRefresh={refreshVideos}
             />
           ))}
 
@@ -105,7 +126,7 @@ export default function VideoFeed() {
   )
 }
 
-function VideoCard({ video, isActive, onVideoEnded, onStartQuiz, onRemove }) {
+function VideoCard({ video, isActive, onVideoEnded, onStartQuiz, onRemove, onRefresh }) {
   const playerRef = useRef(null)
   const [liked, setLiked] = useState(false)
   const [likesCount, setLikesCount] = useState(video.likes_count || 0)
@@ -124,25 +145,32 @@ function VideoCard({ video, isActive, onVideoEnded, onStartQuiz, onRemove }) {
   }, [])
 
   const deleteFromDatabase = async () => {
-    const { error } = await supabase.from('videos').delete().eq('id', video.id)
+    const { data, error } = await supabase
+      .from('videos')
+      .delete()
+      .select()
+      .eq('id', video.id)
+
     if (error) {
-      console.error('Delete failed:', error.message)
-      return false
+      console.error('Delete failed:', error)
+      return { ok: false, message: error.message || 'Delete failed' }
     }
-    return true
+
+    return { ok: true, data }
   }
 
   const handleDelete = async () => {
     if (!window.confirm('Delete this video permanently?')) return
 
     setDeleting(true)
-    const ok = await deleteFromDatabase()
+    const result = await deleteFromDatabase()
     setDeleting(false)
 
-    if (ok) {
+    if (result.ok) {
       onRemove(video.id)
+      onRefresh?.()
     } else {
-      alert('Could not delete video. Run the delete policy SQL in SETUP.md or delete the row in Supabase Table Editor.')
+      alert(`Could not delete video: ${result.message}`)
     }
   }
 
@@ -250,6 +278,7 @@ function VideoCard({ video, isActive, onVideoEnded, onStartQuiz, onRemove }) {
         className="h-full w-full"
       />
 
+      <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none" />
       <div className="absolute bottom-24 left-4 right-16 pointer-events-none">
         <p className="text-white text-lg font-semibold drop-shadow-lg">
           {video.title || 'Educational Video'}

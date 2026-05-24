@@ -4,7 +4,8 @@ import { invokeFunction } from '../lib/invokeFunction'
 import { buildFallbackQuiz } from '../lib/fallbackQuiz'
 
 export default function QuizModal({ video, onClose }) {
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const [authLoading, setAuthLoading] = useState(true)
   const [error, setError] = useState('')
   const [usedFallback, setUsedFallback] = useState(false)
   const [questions, setQuestions] = useState([])
@@ -13,10 +14,27 @@ export default function QuizModal({ video, onClose }) {
   const [answers, setAnswers] = useState([])
   const [finished, setFinished] = useState(false)
   const [score, setScore] = useState(0)
+  const [user, setUser] = useState(null)
 
   useEffect(() => {
-    loadQuiz()
-  }, [video.id])
+    const loadUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      setAuthLoading(false)
+    }
+
+    loadUser()
+  }, [])
+
+  useEffect(() => {
+    if (authLoading) return
+
+    if (user) {
+      loadQuiz()
+    } else {
+      setLoading(false)
+    }
+  }, [video.id, user, authLoading])
 
   const loadQuiz = async (useFallbackOnly = false) => {
     setLoading(true)
@@ -102,6 +120,32 @@ export default function QuizModal({ video, onClose }) {
         <div className="flex flex-col items-center py-12">
           <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
           <p className="text-gray-400 mt-4">Generating quiz with AI...</p>
+        </div>
+      </ModalShell>
+    )
+  }
+
+  if (!user) {
+    return (
+      <ModalShell onClose={onClose}>
+        <div className="space-y-4 py-8 text-center">
+          <h2 className="text-xl font-bold text-white">Sign in to generate a quiz</h2>
+          <p className="text-gray-400">
+            The quiz generator requires an authenticated session. Please sign in, then try again.
+          </p>
+          <a
+            href="/login"
+            className="inline-flex w-full justify-center rounded-lg bg-indigo-600 px-4 py-3 text-white hover:bg-indigo-500"
+          >
+            Go to login
+          </a>
+          <button
+            type="button"
+            onClick={() => loadQuiz(true)}
+            className="inline-flex w-full justify-center rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-slate-200 hover:bg-slate-800"
+          >
+            Use offline quiz instead
+          </button>
         </div>
       </ModalShell>
     )
