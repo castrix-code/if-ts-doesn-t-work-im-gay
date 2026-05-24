@@ -64,7 +64,7 @@ Events Atom uses (sent automatically; no checkbox UI):
    ```bash
    npx supabase functions deploy generate-quiz
    ```
-   Add `GEMINI_API_KEY` in **Edge Functions → Secrets** ([Google AI Studio](https://aistudio.google.com/apikey)). Uses `gemini-2.5-flash` / `gemini-2.0-flash` (1.5 models are retired).
+   Add `GEMINI_API_KEY` in **Edge Functions → Secrets** ([Google AI Studio](https://aistudio.google.com/apikey)).
 3. If AI fails, choose **Use offline quiz** in the modal.
 
 ## Delete videos
@@ -118,18 +118,11 @@ npm run dev
 ## 6. Deploy frontend (Vercel)
 
 1. Push repo to GitHub
-2. Import in Vercel (framework: **Vite**)
-3. Environment variables (required for build):
+2. Import in Vercel
+3. Environment variables:
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
 4. Add production URL to Supabase Auth redirect URLs
-
-**Build failed on Vercel?** This project uses **Vite 6** (not Vite 8). After pulling latest code, delete `package-lock.json` locally, run `npm install`, commit the new lockfile, and redeploy.
-
-```bash
-Remove-Item package-lock.json
-npm install
-```
 
 ## Upload flow
 

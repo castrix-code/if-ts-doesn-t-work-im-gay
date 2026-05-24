@@ -1,0 +1,11 @@
+# Project is linked via: supabase link --project-ref YOUR_REF
+# (stored in supabase/.temp/project-ref, not here)
+
+[functions.mux-upload]
+verify_jwt = true
+
+[functions.generate-quiz]
+verify_jwt = true
+
+[functions.mux-webhook]
+verify_jwt = false
