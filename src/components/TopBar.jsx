@@ -54,7 +54,7 @@ export default function TopBar({ currentView, onNavigate }) {
           className="flex items-center gap-2"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
         >
           <button className="flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.06] text-white/50 transition-all hover:bg-white/[0.1] hover:text-white active:scale-90">
             <Search className="h-4 w-4" />
@@ -63,7 +63,10 @@ export default function TopBar({ currentView, onNavigate }) {
             <Bell className="h-4 w-4" />
             <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-black" />
           </button>
-          <button onClick={() => onNavigate('auth')} className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 ring-2 ring-white/10 transition-all hover:ring-emerald-400/40 active:scale-90">
+          <button
+            onClick={() => onNavigate('auth')}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 ring-2 ring-white/10 transition-all hover:ring-emerald-400/40 active:scale-90"
+          >
             <span className="text-xs font-bold text-white">A</span>
           </button>
         </motion.div>
