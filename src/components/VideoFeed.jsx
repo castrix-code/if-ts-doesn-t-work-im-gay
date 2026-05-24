@@ -1,22 +1,34 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import MuxPlayer from '@mux/mux-player-react'
-import { Brain, Trash2, Volume2, VolumeX } from 'lucide-react'
+import { Brain, Trash2, Volume2, VolumeX, Heart, Loader2 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { supabase, supabaseEnabled } from '../lib/supabase'
 import QuizModal from './QuizModal'
 
-export default function VideoFeed() {
+export default function VideoFeed({ onNavigate }) {
   if (!supabaseEnabled) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
-        <div className="max-w-xl text-center">
-          <h1 className="text-3xl font-bold mb-4">Supabase not configured</h1>
-          <p className="text-gray-300 mb-4">
-            The video feed and account system are disabled until you add your Supabase keys to <code className="bg-gray-900 px-2 py-1 rounded">.env</code>.
+      <div className="flex h-full items-center justify-center px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center max-w-sm"
+        >
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10">
+            <Brain className="h-8 w-8 text-emerald-400" />
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2">Supabase not configured</h2>
+          <p className="text-sm text-white/50 leading-relaxed">
+            The video feed and account system are disabled until you add your Supabase keys to{' '}
+            <code className="rounded bg-white/10 px-1.5 py-0.5 text-emerald-400 text-xs">.env</code>.
           </p>
-          <p className="text-sm text-gray-500">
-            Copy <code className="bg-gray-900 px-2 py-1 rounded">.env.example</code> to <code className="bg-gray-900 px-2 py-1 rounded">.env</code>, set <code className="bg-gray-900 px-2 py-1 rounded">VITE_SUPABASE_URL</code> and <code className="bg-gray-900 px-2 py-1 rounded">VITE_SUPABASE_ANON_KEY</code>, then restart the dev server.
+          <p className="mt-3 text-xs text-white/30">
+            Copy <code className="rounded bg-white/10 px-1 py-0.5 text-white/50">.env.example</code> to{' '}
+            <code className="rounded bg-white/10 px-1 py-0.5 text-white/50">.env</code>, set{' '}
+            <code className="rounded bg-white/10 px-1 py-0.5 text-emerald-400">VITE_SUPABASE_URL</code> and{' '}
+            <code className="rounded bg-white/10 px-1 py-0.5 text-emerald-400">VITE_SUPABASE_ANON_KEY</code>, then restart.
           </p>
-        </div>
+        </motion.div>
       </div>
     )
   }
@@ -86,13 +98,14 @@ export default function VideoFeed() {
 
   return (
     <>
-      <div
-        className="h-screen overflow-y-scroll snap-y snap-mandatory pb-16"
-        onScroll={handleScroll}
-      >
+      <div className="h-screen overflow-y-scroll snap-y snap-mandatory pb-16" onScroll={handleScroll}>
         {loading && (
-          <div className="h-screen flex items-center justify-center bg-black">
-            <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <div className="flex h-screen items-center justify-center">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+              className="h-8 w-8 rounded-full border-2 border-emerald-400/30 border-t-emerald-400"
+            />
           </div>
         )}
 
@@ -110,18 +123,29 @@ export default function VideoFeed() {
           ))}
 
         {!loading && videos.length === 0 && (
-          <div className="h-screen flex flex-col items-center justify-center bg-black px-6 text-center">
-            <p className="text-white text-xl font-semibold">No videos yet</p>
-            <p className="text-gray-400 mt-2">
-              Upload a video — it will appear here once Mux finishes processing.
-            </p>
+          <div className="flex h-screen items-center justify-center px-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center max-w-sm"
+            >
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10">
+                <Brain className="h-8 w-8 text-emerald-400" />
+              </div>
+              <h2 className="text-xl font-bold text-white mb-2">No videos yet</h2>
+              <p className="text-sm text-white/50">
+                Upload a video — it will appear here once Mux finishes processing.
+              </p>
+            </motion.div>
           </div>
         )}
       </div>
 
-      {quizVideo && (
-        <QuizModal video={quizVideo} onClose={() => setQuizVideo(null)} />
-      )}
+      <AnimatePresence>
+        {quizVideo && (
+          <QuizModal video={quizVideo} onClose={() => setQuizVideo(null)} onNavigate={onNavigate} />
+        )}
+      </AnimatePresence>
     </>
   )
 }
@@ -185,7 +209,6 @@ function VideoCard({ video, isActive, onVideoEnded, onStartQuiz, onRemove, onRef
     }
   }
 
-  // Browsers require muted autoplay; unmute when this card is active
   useEffect(() => {
     const player = playerRef.current
     if (!player) return
@@ -199,94 +222,58 @@ function VideoCard({ video, isActive, onVideoEnded, onStartQuiz, onRemove, onRef
     if (soundOn) {
       player.muted = false
       player.play?.().catch(() => {})
-    } else {
-      player.muted = true
     }
   }, [isActive, soundOn])
 
-  // Backup: ensure "ended" opens quiz (onEnded prop can miss on web component)
-  useEffect(() => {
-    const player = playerRef.current
-    if (!player || !isActive) return
-
-    const handleEnded = () => onVideoEnded()
-    player.addEventListener('ended', handleEnded)
-    return () => player.removeEventListener('ended', handleEnded)
-  }, [isActive, onVideoEnded])
-
   const toggleSound = () => {
     const player = playerRef.current
+    if (!player) return
+
     const next = !soundOn
     setSoundOn(next)
-    if (player) {
-      player.muted = !next
-      if (next) player.play?.().catch(() => {})
-    }
+    player.muted = !next
   }
 
-  const handleLike = async () => {
-    if (liked) return
-
-    const newCount = likesCount + 1
-    setLiked(true)
-    setLikesCount(newCount)
-
-    await supabase
-      .from('videos')
-      .update({ likes_count: newCount })
-      .eq('id', video.id)
-  }
-
-  if (playbackError) {
-    return null
+  const toggleLike = () => {
+    setLiked((prev) => !prev)
+    setLikesCount((prev) => (liked ? prev - 1 : prev + 1))
   }
 
   return (
     <div className="h-screen snap-start relative bg-black">
-      {playerLoading && (
-        <div className="absolute inset-0 flex items-center justify-center z-10">
-          <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-        </div>
+      {playbackError ? null : (
+        <>
+          <MuxPlayer
+            ref={playerRef}
+            playbackId={video.mux_playback_id}
+            autoplay="muted"
+            playsInline
+            preload="auto"
+            style={{ height: '100%', width: '100%', '--controls': 'none', '--media-object-fit': 'cover' }}
+            className="h-full w-full"
+            onEnded={onVideoEnded}
+            onError={handlePlaybackError}
+            onCanPlay={() => setPlayerLoading(false)}
+          />
+
+          {playerLoading && isActive && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                className="h-8 w-8 rounded-full border-2 border-emerald-400/30 border-t-emerald-400"
+              />
+            </div>
+          )}
+        </>
       )}
 
-      <MuxPlayer
-        ref={playerRef}
-        playbackId={video.mux_playback_id}
-        streamType="on-demand"
-        autoPlay={isActive ? 'muted' : false}
-        muted={!isActive || !soundOn}
-        loop={false}
-        playsInline
-        preload={isActive ? 'auto' : 'metadata'}
-        onLoadedData={() => {
-          setPlayerLoading(false)
-          if (isActive && soundOn && playerRef.current) {
-            playerRef.current.muted = false
-          }
-        }}
-        onPause={() => {
-          if (!isActive) setPlayerLoading(false)
-        }}
-        onEnded={onVideoEnded}
-        onError={handlePlaybackError}
-        style={{
-          height: '100%',
-          width: '100%',
-          '--controls': 'none',
-          '--media-object-fit': 'cover',
-        }}
-        className="h-full w-full"
-      />
-
       <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none" />
+
       <div className="absolute bottom-24 left-4 right-16 pointer-events-none">
-        <p className="text-white text-lg font-semibold drop-shadow-lg">
-          {video.title || 'Educational Video'}
-        </p>
+        <p className="text-white text-lg font-semibold drop-shadow-lg">{video.title}</p>
         {video.description && (
-          <p className="text-gray-300 text-sm mt-1 drop-shadow-lg line-clamp-2">
-            {video.description}
-          </p>
+          <p className="text-white/60 text-sm mt-1 line-clamp-2">{video.description}</p>
         )}
       </div>
 
@@ -300,27 +287,14 @@ function VideoCard({ video, isActive, onVideoEnded, onStartQuiz, onRemove, onRef
           {soundOn ? (
             <Volume2 className="w-8 h-8 text-white" />
           ) : (
-            <VolumeX className="w-8 h-8 text-white" />
+            <VolumeX className="w-8 h-8 text-white/50" />
           )}
         </button>
-
-        {isOwner && (
-          <button
-            type="button"
-            onClick={handleDelete}
-            disabled={deleting}
-            className="flex flex-col items-center text-gray-400 hover:text-red-400 disabled:opacity-50"
-            aria-label="Delete video"
-          >
-            <Trash2 className="w-8 h-8" />
-            <span className="text-xs mt-1">{deleting ? '...' : 'Delete'}</span>
-          </button>
-        )}
 
         <button
           type="button"
           onClick={onStartQuiz}
-          className="flex flex-col items-center text-indigo-400 hover:text-indigo-300"
+          className="flex flex-col items-center text-emerald-400 hover:text-emerald-300 transition-colors"
           aria-label="Take quiz"
         >
           <Brain className="w-8 h-8" />
@@ -329,24 +303,35 @@ function VideoCard({ video, isActive, onVideoEnded, onStartQuiz, onRemove, onRef
 
         <button
           type="button"
-          onClick={handleLike}
+          onClick={toggleLike}
           className="flex flex-col items-center"
         >
-          <svg
-            className="w-8 h-8 text-white"
-            fill={liked ? '#ef4444' : 'none'}
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-            />
-          </svg>
-          <span className="text-white text-sm mt-1">{likesCount}</span>
+          <Heart
+            className={`w-8 h-8 transition-all ${
+              liked ? 'text-emerald-400 fill-emerald-400 scale-110' : 'text-white'
+            }`}
+          />
+          <span className={`text-sm mt-1 ${liked ? 'text-emerald-400' : 'text-white'}`}>
+            {likesCount}
+          </span>
         </button>
+
+        {isOwner && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="flex flex-col items-center text-red-400 hover:text-red-300 transition-colors"
+            aria-label="Delete"
+          >
+            {deleting ? (
+              <Loader2 className="w-7 h-7 animate-spin" />
+            ) : (
+              <Trash2 className="w-7 h-7" />
+            )}
+            <span className="text-xs mt-1">Delete</span>
+          </button>
+        )}
       </div>
     </div>
   )
