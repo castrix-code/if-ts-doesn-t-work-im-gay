@@ -36,7 +36,7 @@ export default function QuizModal({ video, onClose, onNavigate }) {
     } else {
       setLoading(false)
     }
-  }, [video.id, user, authLoading])
+  }, [video.id, user?.id, authLoading])
 
   const loadQuiz = async (useFallbackOnly = false) => {
     setLoading(true)
