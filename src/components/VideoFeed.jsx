@@ -6,6 +6,67 @@ import { supabase, supabaseEnabled } from '../lib/supabase'
 import QuizModal from './QuizModal'
 
 export default function VideoFeed({ onNavigate }) {
+  const [videos, setVideos] = useState([])
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [quizVideo, setQuizVideo] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  const fetchVideos = useCallback(async () => {
+    if (!supabaseEnabled) return
+    const { data, error } = await supabase
+      .from('videos')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching videos:', error)
+    } else {
+      const playable = (data ?? []).filter(
+        (v) =>
+          v.mux_playback_id &&
+          v.mux_playback_id !== 'placeholder' &&
+          v.status !== 'error' &&
+          (!v.status || v.status === 'ready'),
+      )
+      setVideos(playable)
+    }
+    setLoading(false)
+  }, [])
+
+  const removeVideo = useCallback((videoId) => {
+    setVideos((prev) => prev.filter((v) => v.id !== videoId))
+    setCurrentIndex(0)
+    setQuizVideo((prev) => prev?.id === videoId ? null : prev)
+  }, [])
+
+  const refreshVideos = useCallback(() => {
+    fetchVideos()
+  }, [fetchVideos])
+
+  useEffect(() => {
+    fetchVideos()
+
+    if (!supabaseEnabled) return
+
+    const channel = supabase
+      .channel('videos-changes')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'videos' },
+        () => fetchVideos(),
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'videos' },
+        () => fetchVideos(),
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [fetchVideos])
+
   if (!supabaseEnabled) {
     return (
       <div className="flex h-full items-center justify-center px-6">
@@ -32,11 +93,6 @@ export default function VideoFeed({ onNavigate }) {
       </div>
     )
   }
-
-  const [videos, setVideos] = useState([])
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [quizVideo, setQuizVideo] = useState(null)
-  const [loading, setLoading] = useState(true)
 
   const fetchVideos = useCallback(async () => {
     const { data, error } = await supabase
