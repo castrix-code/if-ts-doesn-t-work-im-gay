@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+import { Brain, X, CheckCircle2, XCircle, Loader2, AlertCircle, WifiOff } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { invokeFunction } from '../lib/invokeFunction'
 import { buildFallbackQuiz } from '../lib/fallbackQuiz'
 
-export default function QuizModal({ video, onClose }) {
+export default function QuizModal({ video, onClose, onNavigate }) {
   const [loading, setLoading] = useState(false)
   const [authLoading, setAuthLoading] = useState(true)
   const [error, setError] = useState('')
@@ -116,181 +118,240 @@ export default function QuizModal({ video, onClose }) {
 
   if (loading) {
     return (
-      <ModalShell onClose={onClose}>
-        <div className="flex flex-col items-center py-12">
-          <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-400 mt-4">Generating quiz with AI...</p>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      >
+        <div className="text-center">
+          <Loader2 className="mx-auto h-10 w-10 animate-spin text-emerald-400" />
+          <p className="mt-4 text-sm text-white/60">Generating quiz with AI...</p>
         </div>
-      </ModalShell>
+      </motion.div>
     )
   }
 
   if (!user) {
     return (
-      <ModalShell onClose={onClose}>
-        <div className="space-y-4 py-8 text-center">
-          <h2 className="text-xl font-bold text-white">Sign in to generate a quiz</h2>
-          <p className="text-gray-400">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-6"
+      >
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="w-full max-w-sm rounded-2xl border border-white/[0.08] bg-[#0a0a0a] p-6"
+        >
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10">
+            <Brain className="h-6 w-6 text-emerald-400" />
+          </div>
+          <h3 className="text-lg font-bold text-white">Sign in to generate a quiz</h3>
+          <p className="mt-2 text-sm text-white/50 leading-relaxed">
             The quiz generator requires an authenticated session. Please sign in, then try again.
           </p>
-          <a
-            href="/login"
-            className="inline-flex w-full justify-center rounded-lg bg-indigo-600 px-4 py-3 text-white hover:bg-indigo-500"
-          >
-            Go to login
-          </a>
-          <button
-            type="button"
-            onClick={() => loadQuiz(true)}
-            className="inline-flex w-full justify-center rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-slate-200 hover:bg-slate-800"
-          >
-            Use offline quiz instead
-          </button>
-        </div>
-      </ModalShell>
+          <div className="mt-5 space-y-3">
+            <button
+              onClick={() => onNavigate('auth')}
+              className="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25"
+            >
+              Go to login
+            </button>
+            <button
+              onClick={() => loadQuiz(true)}
+              className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] py-3 text-sm text-white/60 transition-all hover:bg-white/[0.08] hover:text-white"
+            >
+              Use offline quiz instead
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
     )
   }
 
   if (error) {
     return (
-      <ModalShell onClose={onClose}>
-        <p className="text-red-400 mb-2 text-sm">{error}</p>
-        <p className="text-gray-500 text-xs mb-4">
-          Deploy <code className="text-gray-400">generate-quiz</code> and set{' '}
-          <code className="text-gray-400">GEMINI_API_KEY</code> in Supabase secrets, or use the offline quiz.
-        </p>
-        <button
-          type="button"
-          onClick={() => loadQuiz(true)}
-          className="w-full bg-indigo-600 text-white py-3 rounded-lg mb-2"
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-6"
+      >
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="w-full max-w-sm rounded-2xl border border-white/[0.08] bg-[#0a0a0a] p-6"
         >
-          Use offline quiz
-        </button>
-        <button
-          type="button"
-          onClick={() => loadQuiz(false)}
-          className="w-full bg-gray-800 text-white py-3 rounded-lg"
-        >
-          Retry AI quiz
-        </button>
-      </ModalShell>
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-red-500/10">
+            <AlertCircle className="h-6 w-6 text-red-400" />
+          </div>
+          <p className="text-sm text-red-300 mb-2">{error}</p>
+          <p className="text-xs text-white/40 leading-relaxed">
+            Deploy generate-quiz and set <code className="rounded bg-white/10 px-1 py-0.5 text-emerald-400">GEMINI_API_KEY</code> in Supabase secrets, or use the offline quiz.
+          </p>
+          <div className="mt-5 space-y-3">
+            <button
+              onClick={() => loadQuiz(true)}
+              className="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25"
+            >
+              Use offline quiz
+            </button>
+            <button
+              onClick={() => loadQuiz(false)}
+              className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] py-3 text-sm text-white/60 transition-all hover:bg-white/[0.08] hover:text-white"
+            >
+              Retry AI quiz
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
     )
   }
 
   if (finished) {
+    const pct = Math.round((score / questions.length) * 100)
     return (
-      <ModalShell onClose={onClose}>
-        <h2 className="text-2xl font-bold text-white mb-2">Quiz complete</h2>
-        <p className="text-indigo-400 text-lg mb-6">
-          Score: {score} / {questions.length}
-        </p>
-        <div className="space-y-4 max-h-64 overflow-y-auto">
-          {questions.map((q, i) => {
-            const answer = answers[i]
-            return (
-              <div
-                key={q.question}
-                className={`p-3 rounded-lg border ${
-                  answer?.isCorrect
-                    ? 'border-green-500/50 bg-green-500/10'
-                    : 'border-red-500/50 bg-red-500/10'
-                }`}
-              >
-                <p className="text-white text-sm font-medium">{q.question}</p>
-                <p className="text-gray-400 text-xs mt-1">
-                  Correct: {q.options[q.correctIndex]}
-                </p>
-                <p className="text-gray-300 text-xs mt-2">{q.explanation}</p>
-              </div>
-            )
-          })}
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-full mt-6 bg-indigo-600 text-white py-3 rounded-lg"
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-6"
+      >
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="w-full max-w-sm max-h-[80vh] overflow-y-auto rounded-2xl border border-white/[0.08] bg-[#0a0a0a] p-6"
         >
-          Continue watching
-        </button>
-      </ModalShell>
+          <div className="text-center mb-6">
+            <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/10">
+              <span className="text-2xl font-bold text-emerald-400">{pct}%</span>
+            </div>
+            <h3 className="text-xl font-bold text-white">Quiz complete</h3>
+            <p className="mt-1 text-sm text-white/50">
+              Score: <span className="text-emerald-400 font-semibold">{score}</span> / {questions.length}
+            </p>
+          </div>
+
+          <div className="space-y-3 mb-6">
+            {questions.map((q, i) => {
+              const answer = answers[i]
+              return (
+                <div key={i} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="text-sm text-white/80">{q.question}</p>
+                  <div className="mt-1.5 flex items-center gap-1.5">
+                    {answer.isCorrect ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                    ) : (
+                      <XCircle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+                    )}
+                    <span className="text-xs text-white/40">Correct: {q.options[q.correctIndex]}</span>
+                  </div>
+                  {q.explanation && (
+                    <p className="mt-1.5 text-xs text-white/30 leading-relaxed">{q.explanation}</p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          <button
+            onClick={onClose}
+            className="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25"
+          >
+            Continue watching
+          </button>
+        </motion.div>
+      </motion.div>
     )
   }
 
   return (
-    <ModalShell onClose={onClose}>
-      {usedFallback && (
-        <p className="text-amber-400/90 text-xs mb-3">Offline quiz (AI unavailable)</p>
-      )}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-white">Quick quiz</h2>
-        <span className="text-gray-500 text-sm">
-          {currentIndex + 1} / {questions.length}
-        </span>
-      </div>
-
-      <p className="text-white mb-4">{currentQuestion?.question}</p>
-
-      <div className="space-y-2">
-        {currentQuestion?.options.map((option, index) => {
-          let style = 'bg-gray-800 hover:bg-gray-700 border-gray-700'
-          if (selectedIndex !== null) {
-            if (index === currentQuestion.correctIndex) {
-              style = 'bg-green-500/20 border-green-500'
-            } else if (index === selectedIndex) {
-              style = 'bg-red-500/20 border-red-500'
-            }
-          }
-
-          return (
-            <button
-              key={option}
-              type="button"
-              onClick={() => handleSelect(index)}
-              disabled={selectedIndex !== null}
-              className={`w-full text-left px-4 py-3 rounded-lg border text-white transition ${style}`}
-            >
-              {option}
-            </button>
-          )
-        })}
-      </div>
-
-      {selectedIndex !== null && (
-        <p className="text-gray-400 text-sm mt-3">{currentQuestion.explanation}</p>
-      )}
-
-      <button
-        type="button"
-        onClick={handleNext}
-        disabled={selectedIndex === null}
-        className="w-full mt-6 bg-indigo-600 text-white py-3 rounded-lg font-semibold disabled:opacity-50"
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm"
+    >
+      <motion.div
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 100, opacity: 0 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="w-full max-w-sm rounded-t-2xl sm:rounded-2xl border border-white/[0.08] bg-[#0a0a0a] p-6"
       >
-        {currentIndex < questions.length - 1 ? 'Next question' : 'See results'}
-      </button>
-    </ModalShell>
-  )
-}
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            {usedFallback && (
+              <span className="mb-1 flex items-center gap-1 text-xs text-amber-400/70">
+                <WifiOff className="h-3 w-3" /> Offline quiz
+              </span>
+            )}
+            <h3 className="text-lg font-bold text-white">Quick quiz</h3>
+            <p className="text-xs text-white/40">{currentIndex + 1} / {questions.length}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-white/40 transition-all hover:bg-white/[0.1] hover:text-white"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
 
-function ModalShell({ children, onClose }) {
-  return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4">
-      <button
-        type="button"
-        className="absolute inset-0 bg-black/80"
-        onClick={onClose}
-        aria-label="Close quiz"
-      />
-      <div className="relative bg-gray-900 rounded-2xl p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto border border-gray-800">
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-white"
-          aria-label="Close"
-        >
-          ✕
-        </button>
-        {children}
-      </div>
-    </div>
+        <div className="mb-5 h-1 overflow-hidden rounded-full bg-white/[0.06]">
+          <motion.div
+            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
+            initial={{ width: 0 }}
+            animate={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
+            transition={{ duration: 0.3 }}
+          />
+        </div>
+
+        <p className="text-white font-medium leading-relaxed mb-5">{currentQuestion.question}</p>
+
+        <div className="space-y-2.5 mb-5">
+          {currentQuestion.options.map((option, i) => {
+            const isSelected = selectedIndex === i
+            const isCorrect = i === currentQuestion.correctIndex
+            const showResult = selectedIndex !== null
+
+            let optionClass = 'border-white/[0.08] bg-white/[0.03] text-white/70'
+            if (showResult && isCorrect) {
+              optionClass = 'border-emerald-500/50 bg-emerald-500/[0.08] text-emerald-300'
+            } else if (showResult && isSelected && !isCorrect) {
+              optionClass = 'border-red-500/50 bg-red-500/[0.08] text-red-300'
+            } else if (isSelected) {
+              optionClass = 'border-emerald-500/50 bg-emerald-500/[0.08] text-white'
+            }
+
+            return (
+              <button
+                key={i}
+                onClick={() => handleSelect(i)}
+                disabled={selectedIndex !== null}
+                className={`w-full rounded-xl border px-4 py-3 text-left text-sm transition-all ${optionClass} disabled:cursor-default`}
+              >
+                <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-current/30 text-[10px] font-bold">
+                  {String.fromCharCode(65 + i)}
+                </span>
+                {option}
+              </button>
+            )
+          })}
+        </div>
+
+        {selectedIndex !== null && (
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={handleNext}
+            className="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25"
+          >
+            {currentIndex < questions.length - 1 ? 'Next question' : 'See results'}
+          </motion.button>
+        )}
+      </motion.div>
+    </motion.div>
   )
 }
