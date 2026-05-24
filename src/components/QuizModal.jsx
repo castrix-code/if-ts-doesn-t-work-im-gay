@@ -116,7 +116,7 @@ export default function QuizModal({ video, onClose, onNavigate }) {
     }
   }
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <motion.div
         initial={{ opacity: 0 }}
@@ -126,7 +126,9 @@ export default function QuizModal({ video, onClose, onNavigate }) {
       >
         <div className="text-center">
           <Loader2 className="mx-auto h-10 w-10 animate-spin text-emerald-400" />
-          <p className="mt-4 text-sm text-white/60">Generating quiz with AI...</p>
+          <p className="mt-4 text-sm text-white/60">
+            {authLoading ? 'Checking login...' : 'Generating quiz with AI...'}
+          </p>
         </div>
       </motion.div>
     )
