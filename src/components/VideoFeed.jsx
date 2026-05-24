@@ -83,69 +83,10 @@ export default function VideoFeed({ onNavigate }) {
             The video feed and account system are disabled until you add your Supabase keys to{' '}
             <code className="rounded bg-white/10 px-1.5 py-0.5 text-emerald-400 text-xs">.env</code>.
           </p>
-          <p className="mt-3 text-xs text-white/30">
-            Copy <code className="rounded bg-white/10 px-1 py-0.5 text-white/50">.env.example</code> to{' '}
-            <code className="rounded bg-white/10 px-1 py-0.5 text-white/50">.env</code>, set{' '}
-            <code className="rounded bg-white/10 px-1 py-0.5 text-emerald-400">VITE_SUPABASE_URL</code> and{' '}
-            <code className="rounded bg-white/10 px-1 py-0.5 text-emerald-400">VITE_SUPABASE_ANON_KEY</code>, then restart.
-          </p>
         </motion.div>
       </div>
     )
   }
-
-  const fetchVideos = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('videos')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      console.error('Error fetching videos:', error)
-    } else {
-      const playable = (data ?? []).filter(
-        (v) =>
-          v.mux_playback_id &&
-          v.mux_playback_id !== 'placeholder' &&
-          v.status !== 'error' &&
-          (!v.status || v.status === 'ready'),
-      )
-      setVideos(playable)
-    }
-    setLoading(false)
-  }, [])
-
-  const removeVideo = useCallback((videoId) => {
-    setVideos((prev) => prev.filter((v) => v.id !== videoId))
-    setCurrentIndex(0)
-    if (quizVideo?.id === videoId) setQuizVideo(null)
-  }, [quizVideo?.id])
-
-  const refreshVideos = useCallback(() => {
-    fetchVideos()
-  }, [fetchVideos])
-
-  useEffect(() => {
-    fetchVideos()
-
-    const channel = supabase
-      .channel('videos-changes')
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'videos' },
-        () => fetchVideos(),
-      )
-      .on(
-        'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'videos' },
-        () => fetchVideos(),
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [fetchVideos])
 
   const handleScroll = (e) => {
     const index = Math.round(e.target.scrollTop / window.innerHeight)
@@ -167,24 +108,20 @@ export default function VideoFeed({ onNavigate }) {
 
         {!loading &&
           videos.map((video, index) => (
-    const deleteFromDatabase = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return { ok: false, message: 'Not authenticated' }
+            <VideoCard
+              key={video.id}
+              video={video}
+              isActive={index === currentIndex}
+              onVideoEnded={() => setQuizVideo(video)}
+              onStartQuiz={() => setQuizVideo(video)}
+              onRemove={removeVideo}
+              onRefresh={refreshVideos}
+            />
+          ))}
 
-      const { data, error } = await supabase
-        .from('videos')
-        .delete()
-        .select()
-        .eq('id', video.id)
-        .eq('user_id', user.id)  // ← ensures only the owner can delete
-
-      if (error) {
-        console.error('Delete failed:', error)
-        return { ok: false, message: error.message || 'Delete failed' }
-      }
-
-      return { ok: true, data }
-    }
+        {!loading && videos.length === 0 && (
+          <div className="flex h-screen items-center justify-center px-6">
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="text-center max-w-sm"
@@ -229,11 +166,15 @@ function VideoCard({ video, isActive, onVideoEnded, onStartQuiz, onRemove, onRef
   }, [])
 
   const deleteFromDatabase = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { ok: false, message: 'Not authenticated' }
+
     const { data, error } = await supabase
       .from('videos')
       .delete()
       .select()
       .eq('id', video.id)
+      .eq('user_id', user.id)
 
     if (error) {
       console.error('Delete failed:', error)
