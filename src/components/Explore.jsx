@@ -1,3 +1,5 @@
+import { supabase } from '../lib/supabase'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Compass, Flame, Filter } from 'lucide-react'
 
@@ -14,6 +16,26 @@ export default function Explore() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [searching, setSearching] = useState(false)
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([])
+      return
+    }
+
+    const timer = setTimeout(async () => {
+      setSearching(true)
+      const { data } = await supabase
+        .from('videos')
+        .select('*')
+        .or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`)
+        .eq('status', 'ready')
+        .limit(20)
+      setSearchResults(data ?? [])
+      setSearching(false)
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery])  
   return (
     <div className="min-h-screen bg-black px-4 pb-28 pt-6 sm:px-6">
       <div className="mx-auto max-w-2xl">
@@ -34,7 +56,7 @@ export default function Explore() {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mb-6">
           <div className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.03] px-4 py-3">
             <svg className="h-4 w-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-            <input type="text" placeholder="Search topics, creators, videos..." className="flex-1 bg-transparent text-sm text-white placeholder:text-white/25 focus:outline-none" />
+            <input type="text" placeholder="Search topics, creators, videos..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 bg-transparent text-sm text-white placeholder:text-white/25 focus:outline-none" />
           </div>
         </motion.div>
 
