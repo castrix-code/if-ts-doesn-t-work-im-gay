@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
         Authorization: `Basic ${credentials}`,
       },
       body: JSON.stringify({
-        cors_origin: '*',
+        cors_origin: Deno.env.get('MUX_CORS_ORIGIN') ?? 'https://if-ts-doesn-t-work-im-gay.vercel.app',,
         new_asset_settings: {
           playback_policy: ['public'],
           passthrough: video.id,
