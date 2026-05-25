@@ -1,15 +1,51 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, AlertCircle, LogOut, User as UserIcon, Video, Award } from 'lucide-react'
 import { supabase, supabaseEnabled } from '../lib/supabase'
 
 export default function Auth({ onNavigate }) {
+  const [user, setUser] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [videoCount, setVideoCount] = useState(0)
+  const [quizCount, setQuizCount] = useState(0)
+
+  useEffect(() => {
+    if (!supabaseEnabled) {
+      setAuthLoading(false)
+      return
+    }
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user)
+      setAuthLoading(false)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    if (!user) return
+    supabase
+      .from('videos')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .then(({ count }) => setVideoCount(count ?? 0))
+  }, [user])
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -43,8 +79,70 @@ export default function Auth({ onNavigate }) {
     })
   }
 
+  if (authLoading) {
+    return (
+      <div className="flex h-[calc(100vh-104px)] items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          className="h-8 w-8 rounded-full border-2 border-emerald-400/30 border-t-emerald-400"
+        />
+      </div>
+    )
+  }
+
+  // ── Signed in → show profile ──
+  if (user) {
+    const initials = user.email ? user.email[0].toUpperCase() : 'A'
+    const displayName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User'
+
+    return (
+      <div className="flex h-[calc(100vh-104px)] items-center justify-center px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-sm text-center"
+        >
+          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/25">
+            <span className="text-2xl font-bold text-white">{initials}</span>
+          </div>
+
+          <h2 className="text-xl font-bold text-white">{displayName}</h2>
+          <p className="text-sm text-white/40 mt-1">{user.email}</p>
+
+          <div className="mt-6 flex justify-center gap-6">
+            <div className="flex flex-col items-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.06]">
+                <Video className="h-5 w-5 text-emerald-400" />
+              </div>
+              <span className="mt-1.5 text-lg font-bold text-white">{videoCount}</span>
+              <span className="text-[10px] text-white/40">Videos</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.06]">
+                <Award className="h-5 w-5 text-emerald-400" />
+              </div>
+              <span className="mt-1.5 text-lg font-bold text-white">{quizCount}</span>
+              <span className="text-[10px] text-white/40">Quizzes</span>
+            </div>
+          </div>
+
+          <button
+            onClick={handleSignOut}
+            className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] py-3 text-sm font-medium text-red-400 transition-all hover:bg-red-500/10 hover:border-red-500/20 active:scale-[0.98]"
+          >
+            <LogOut className="h-4 w-4" />
+            Sign out
+          </button>
+        </motion.div>
+      </div>
+    )
+  }
+
+  // ── Not signed in → show login form ──
   return (
-    <div className="flex h-full items-center justify-center px-6">
+    <div className="flex h-[calc(100vh-104px)] items-center justify-center px-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
