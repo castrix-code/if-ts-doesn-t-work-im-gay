@@ -252,10 +252,12 @@ function VideoCard({ video, isActive, onVideoEnded, onStartQuiz, onRemove, onRef
   preload="auto"
   style={{
   position: 'absolute',
-  inset: 0,
-  height: '120%',
-  width: '100%',
-  top: '-10%',
+  top: '50%',
+  left: '50%',
+  transform: 'translateX(-50%) translateY(-50%)',
+  height: '100%',
+  width: '177.78vh',
+  minWidth: '100%',
   '--controls': 'none',
   '--media-object-fit': 'cover',
   '--media-object-position': 'center',
