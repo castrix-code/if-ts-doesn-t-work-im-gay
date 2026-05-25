@@ -7,12 +7,13 @@ import Upload from './components/Upload'
 import Auth from './components/Auth'
 import Explore from './components/Explore'
 import Stats from './components/Stats'
-
+import ErrorBoundary from './components/ErrorBoundary'
 function App() {
   const [currentView, setCurrentView] = useState('feed')
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <ErrorBoundary>
+    <div className="min-h-screen bg-white text-gray-900">
       <TopBar currentView={currentView} onNavigate={setCurrentView} />
 
       <main className="pt-[52px]">
@@ -77,6 +78,7 @@ function App() {
 
       <Navigation currentView={currentView} onNavigate={setCurrentView} />
     </div>
+    </ErrorBoundary>
   )
 }
 
