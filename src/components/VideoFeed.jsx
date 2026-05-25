@@ -89,13 +89,14 @@ export default function VideoFeed({ onNavigate }) {
   }
 
   const handleScroll = (e) => {
-    const index = Math.round(e.target.scrollTop / window.innerHeight)
+    const cardHeight = e.target.scrollHeight / videos.length || window.innerHeight
+    const index = Math.round(e.target.scrollTop / cardHeight)
     setCurrentIndex(index)
   }
 
   return (
     <>
-      <div className="h-screen overflow-y-scroll snap-y snap-mandatory pb-16" onScroll={handleScroll}>
+      <div className="h-screen overflow-y-scroll snap-y snap-mandatory" onScroll={handleScroll}>
         {loading && (
           <div className="flex h-screen items-center justify-center">
             <motion.div
@@ -241,35 +242,31 @@ function VideoCard({ video, isActive, onVideoEnded, onStartQuiz, onRemove, onRef
   }
 
   return (
-    <div className="h-[100dvh] snap-start relative bg-black overflow-hidden">
+    <div className="h-screen snap-start relative bg-black flex items-center justify-center">
       {playbackError ? null : (
         <>
-<MuxPlayer
-  ref={playerRef}
-  playbackId={video.mux_playback_id}
-  autoplay="muted"
-  playsInline
-  preload="auto"
-  style={{
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translateX(-50%) translateY(-50%)',
-  height: '100%',
-  width: '177.78vh',
-  minWidth: '100%',
-  '--controls': 'none',
-  '--media-object-fit': 'cover',
-  '--media-object-position': 'center',
-}}
-  className="h-full w-full"
-  onEnded={onVideoEnded}
-  onError={handlePlaybackError}
-  onCanPlay={() => setPlayerLoading(false)}
-/>
+          {/* Video container - fits between top bar and bottom nav */}
+          <div className="absolute inset-0 top-[52px] bottom-[52px] flex items-center justify-center">
+            <MuxPlayer
+              ref={playerRef}
+              playbackId={video.mux_playback_id}
+              autoplay="muted"
+              playsInline
+              preload="auto"
+              style={{
+                height: '100%',
+                width: '100%',
+                '--controls': 'none',
+                '--media-object-fit': 'contain',
+              }}
+              onEnded={onVideoEnded}
+              onError={handlePlaybackError}
+              onCanPlay={() => setPlayerLoading(false)}
+            />
+          </div>
 
           {playerLoading && isActive && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+            <div className="absolute inset-0 top-[52px] bottom-[52px] flex items-center justify-center bg-black/40 z-10">
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
@@ -280,16 +277,19 @@ function VideoCard({ video, isActive, onVideoEnded, onStartQuiz, onRemove, onRef
         </>
       )}
 
-      <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none" />
+      {/* Gradient overlay at bottom of video area */}
+      <div className="absolute left-0 right-0 bottom-[52px] h-28 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none z-20" />
 
-      <div className="absolute bottom-24 left-4 right-16 pointer-events-none">
+      {/* Video info */}
+      <div className="absolute left-4 right-16 bottom-[72px] z-20 pointer-events-none">
         <p className="text-white text-lg font-semibold drop-shadow-lg">{video.title}</p>
         {video.description && (
           <p className="text-white/60 text-sm mt-1 line-clamp-2">{video.description}</p>
         )}
       </div>
 
-      <div className="absolute right-4 bottom-32 flex flex-col gap-6 z-20">
+      {/* Side action buttons */}
+      <div className="absolute right-3 bottom-[80px] z-20 flex flex-col gap-5">
         <button
           type="button"
           onClick={toggleSound}
@@ -297,9 +297,9 @@ function VideoCard({ video, isActive, onVideoEnded, onStartQuiz, onRemove, onRef
           aria-label={soundOn ? 'Mute' : 'Unmute'}
         >
           {soundOn ? (
-            <Volume2 className="w-8 h-8 text-white" />
+            <Volume2 className="w-7 h-7 text-white" />
           ) : (
-            <VolumeX className="w-8 h-8 text-white/50" />
+            <VolumeX className="w-7 h-7 text-white/50" />
           )}
         </button>
 
@@ -309,8 +309,8 @@ function VideoCard({ video, isActive, onVideoEnded, onStartQuiz, onRemove, onRef
           className="flex flex-col items-center text-emerald-400 hover:text-emerald-300 transition-colors"
           aria-label="Take quiz"
         >
-          <Brain className="w-8 h-8" />
-          <span className="text-xs mt-1">Quiz</span>
+          <Brain className="w-7 h-7" />
+          <span className="text-[10px] mt-0.5">Quiz</span>
         </button>
 
         <button
@@ -319,11 +319,11 @@ function VideoCard({ video, isActive, onVideoEnded, onStartQuiz, onRemove, onRef
           className="flex flex-col items-center"
         >
           <Heart
-            className={`w-8 h-8 transition-all ${
+            className={`w-7 h-7 transition-all ${
               liked ? 'text-emerald-400 fill-emerald-400 scale-110' : 'text-white'
             }`}
           />
-          <span className={`text-sm mt-1 ${liked ? 'text-emerald-400' : 'text-white'}`}>
+          <span className={`text-[10px] mt-0.5 ${liked ? 'text-emerald-400' : 'text-white'}`}>
             {likesCount}
           </span>
         </button>
@@ -337,11 +337,11 @@ function VideoCard({ video, isActive, onVideoEnded, onStartQuiz, onRemove, onRef
             aria-label="Delete"
           >
             {deleting ? (
-              <Loader2 className="w-7 h-7 animate-spin" />
+              <Loader2 className="w-6 h-6 animate-spin" />
             ) : (
-              <Trash2 className="w-7 h-7" />
+              <Trash2 className="w-6 h-6" />
             )}
-            <span className="text-xs mt-1">Delete</span>
+            <span className="text-[10px] mt-0.5">Delete</span>
           </button>
         )}
       </div>
