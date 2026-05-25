@@ -63,20 +63,15 @@ Deno.serve(async (req) => {
     }
 
     const { title, description, videoId } = await req.json()
-      // Validate inputs
-      const safeTitle = String(title ?? '').slice(0, 200)
-      const safeDescription = String(description ?? '').slice(0, 1000)
-      if (!safeTitle.trim()) {
-        return jsonResponse({ error: 'Title is required' }, 400, req)
-      }
+
     const prompt = `You are an educational quiz generator for the Atom learning app.
 Create exactly 4 multiple-choice questions about this educational video.
 
-Title: ${safeTitle}
-Description: ${safeDescription || 'General educational content'}
+Title: ${title || 'Educational video'}
+Description: ${description || 'General educational content'}
 
 Return ONLY valid JSON matching this schema (no markdown, no code fences):
-${QUIZ_SCHEMA}
+ ${QUIZ_SCHEMA}
 
 Rules:
 - Questions must test understanding of the topic
@@ -144,7 +139,7 @@ Rules:
       explanation: String(q.explanation ?? ''),
     }))
 
-    return jsonResponse({ videoId, questions })
+    return jsonResponse({ videoId, questions }, 200, req)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
     return jsonResponse({ error: message }, 500, req)
