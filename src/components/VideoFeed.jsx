@@ -251,14 +251,15 @@ function VideoCard({ video, isActive, onVideoEnded, onStartQuiz, onRemove, onRef
   playsInline
   preload="auto"
   style={{
-    position: 'absolute',
-    inset: 0,
-    height: '100%',
-    width: '100%',
-    '--controls': 'none',
-    '--media-object-fit': 'cover',
-    '--media-object-position': 'center',
-  }}
+  position: 'absolute',
+  inset: 0,
+  height: '100%',
+  width: '100%',
+  minHeight: '100vh',
+  '--controls': 'none',
+  '--media-object-fit': 'cover',
+  '--media-object-position': 'center',
+}}
   className="h-full w-full"
   onEnded={onVideoEnded}
   onError={handlePlaybackError}
