@@ -3,13 +3,13 @@ import { corsHeaders, jsonResponse } from '../_shared/cors.ts'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders(req) })
   }
 
   try {
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
-      return jsonResponse({ error: 'Missing authorization header' }, 401)
+      return jsonResponse({ error: 'Missing authorization header' }, 401, req)
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
@@ -20,6 +20,7 @@ Deno.serve(async (req) => {
       return jsonResponse(
         { error: 'Supabase environment not configured on edge function' },
         500,
+        req,
       )
     }
 
@@ -36,13 +37,14 @@ Deno.serve(async (req) => {
       return jsonResponse(
         { error: `Unauthorized: ${userError?.message || 'no user'}` },
         401,
+        req,
       )
     }
 
     const { title, description } = await req.json()
 
     if (!title?.trim()) {
-      return jsonResponse({ error: 'Title is required' }, 400)
+      return jsonResponse({ error: 'Title is required' }, 400, req)
     }
 
     const muxTokenId = Deno.env.get('MUX_TOKEN_ID')
@@ -55,6 +57,7 @@ Deno.serve(async (req) => {
             'Mux credentials not configured. Add MUX_TOKEN_ID and MUX_TOKEN_SECRET in Supabase → Edge Functions → Secrets, then redeploy mux-upload.',
         },
         500,
+        req,
       )
     }
 
@@ -78,6 +81,7 @@ Deno.serve(async (req) => {
           error: `Database insert failed: ${insertError.message}. Run the SQL migration in SETUP.md step 1.`,
         },
         500,
+        req,
       )
     }
 
@@ -90,7 +94,7 @@ Deno.serve(async (req) => {
         Authorization: `Basic ${credentials}`,
       },
       body: JSON.stringify({
-        cors_origin: Deno.env.get('MUX_CORS_ORIGIN') ?? 'https://if-ts-doesn-t-work-im-gay.vercel.app',,
+        cors_origin: Deno.env.get('MUX_CORS_ORIGIN') ?? 'http://localhost:5173',
         new_asset_settings: {
           playback_policy: ['public'],
           passthrough: video.id,
@@ -106,7 +110,7 @@ Deno.serve(async (req) => {
         muxBody?.error?.messages?.join(', ') ||
         muxBody?.error?.type ||
         JSON.stringify(muxBody)
-      return jsonResponse({ error: `Mux API error: ${muxError}` }, 500)
+      return jsonResponse({ error: `Mux API error: ${muxError}` }, 500, req)
     }
 
     const uploadUrl = muxBody.data.url as string
@@ -122,9 +126,9 @@ Deno.serve(async (req) => {
       uploadUrl,
       videoId: video.id,
       uploadId,
-    })
+    }, 200, req)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    return jsonResponse({ error: message }, 500)
+    return jsonResponse({ error: message }, 500, req)
   }
 })
