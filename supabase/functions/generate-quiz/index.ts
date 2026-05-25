@@ -79,7 +79,7 @@ Rules:
 - correctIndex is 0-3
 - Include a helpful explanation for each question`
 
-    const models = ['gemini-2.0-flash', 'gemini-2.0-flash-lite']
+    const models = ['gemini-2.5-flash', 'gemini-2.5-flash-preview-05-20']
     let geminiBody: Record<string, unknown> = {}
     let lastError = 'Failed to generate quiz from Gemini'
 
