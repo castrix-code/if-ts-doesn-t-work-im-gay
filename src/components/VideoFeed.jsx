@@ -241,21 +241,29 @@ function VideoCard({ video, isActive, onVideoEnded, onStartQuiz, onRemove, onRef
   }
 
   return (
-    <div className="h-screen snap-start relative bg-black">
+    <div className="h-screen snap-start relative bg-black overflow-hidden">
       {playbackError ? null : (
         <>
-          <MuxPlayer
-            ref={playerRef}
-            playbackId={video.mux_playback_id}
-            autoplay="muted"
-            playsInline
-            preload="auto"
-            style={{ height: '100%', width: '100%', '--controls': 'none', '--media-object-fit': 'cover' }}
-            className="h-full w-full"
-            onEnded={onVideoEnded}
-            onError={handlePlaybackError}
-            onCanPlay={() => setPlayerLoading(false)}
-          />
+<MuxPlayer
+  ref={playerRef}
+  playbackId={video.mux_playback_id}
+  autoplay="muted"
+  playsInline
+  preload="auto"
+  style={{
+    position: 'absolute',
+    inset: 0,
+    height: '100%',
+    width: '100%',
+    '--controls': 'none',
+    '--media-object-fit': 'cover',
+    '--media-object-position': 'center',
+  }}
+  className="h-full w-full"
+  onEnded={onVideoEnded}
+  onError={handlePlaybackError}
+  onCanPlay={() => setPlayerLoading(false)}
+/>
 
           {playerLoading && isActive && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/40">
