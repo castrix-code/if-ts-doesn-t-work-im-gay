@@ -67,14 +67,15 @@ export default function QuizModal({ video, onClose, onNavigate }) {
     }
   }
 
-  const currentQuestion = questions[currentIndex]
-
   const handleSelect = (optionIndex) => {
     if (selectedIndex !== null || finished) return
     setSelectedIndex(optionIndex)
   }
 
   const handleNext = async () => {
+    const currentQuestion = questions[currentIndex]
+    if (!currentQuestion) return
+
     const isCorrect = selectedIndex === currentQuestion.correctIndex
     const newAnswers = [
       ...answers,
@@ -105,28 +106,29 @@ export default function QuizModal({ video, onClose, onNavigate }) {
         score: finalScore,
         total_questions: questions.length,
         answers: newAnswers.map((a, i) => ({
-          question: questions[i].question,
+          question: questions[i]?.question || '',
           selectedIndex: a.selectedIndex,
           correctIndex: a.correctIndex,
           isCorrect: a.isCorrect,
-          explanation: questions[i].explanation,
+          explanation: questions[i]?.explanation || '',
           fallback: usedFallback,
         })),
       })
     }
   }
 
+  // Show loading spinner while checking auth OR generating quiz
   if (authLoading || loading) {
     return (
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm"
       >
         <div className="text-center">
-          <Loader2 className="mx-auto h-10 w-10 animate-spin text-emerald-400" />
-          <p className="mt-4 text-sm text-white/60">
+          <Loader2 className="mx-auto h-10 w-10 animate-spin text-emerald-500" />
+          <p className="mt-4 text-sm text-gray-500">
             {authLoading ? 'Checking login...' : 'Generating quiz with AI...'}
           </p>
         </div>
@@ -140,18 +142,18 @@ export default function QuizModal({ video, onClose, onNavigate }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-6"
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-6"
       >
         <motion.div
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="w-full max-w-sm rounded-2xl border border-white/[0.08] bg-[#0a0a0a] p-6"
+          className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-xl"
         >
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10">
-            <Brain className="h-6 w-6 text-emerald-400" />
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50">
+            <Brain className="h-6 w-6 text-emerald-500" />
           </div>
-          <h3 className="text-lg font-bold text-white">Sign in to generate a quiz</h3>
-          <p className="mt-2 text-sm text-white/50 leading-relaxed">
+          <h3 className="text-lg font-bold text-gray-900">Sign in to generate a quiz</h3>
+          <p className="mt-2 text-sm text-gray-500 leading-relaxed">
             The quiz generator requires an authenticated session. Please sign in, then try again.
           </p>
           <div className="mt-5 space-y-3">
@@ -163,7 +165,7 @@ export default function QuizModal({ video, onClose, onNavigate }) {
             </button>
             <button
               onClick={() => loadQuiz(true)}
-              className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] py-3 text-sm text-white/60 transition-all hover:bg-white/[0.08] hover:text-white"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 text-sm text-gray-600 transition-all hover:bg-gray-100 hover:text-gray-800"
             >
               Use offline quiz instead
             </button>
@@ -179,19 +181,19 @@ export default function QuizModal({ video, onClose, onNavigate }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-6"
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-6"
       >
         <motion.div
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="w-full max-w-sm rounded-2xl border border-white/[0.08] bg-[#0a0a0a] p-6"
+          className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-xl"
         >
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-red-500/10">
-            <AlertCircle className="h-6 w-6 text-red-400" />
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-red-50">
+            <AlertCircle className="h-6 w-6 text-red-500" />
           </div>
-          <p className="text-sm text-red-300 mb-2">{error}</p>
-          <p className="text-xs text-white/40 leading-relaxed">
-            Deploy generate-quiz and set <code className="rounded bg-white/10 px-1 py-0.5 text-emerald-400">GEMINI_API_KEY</code> in Supabase secrets, or use the offline quiz.
+          <p className="text-sm text-red-600 mb-2">{error}</p>
+          <p className="text-xs text-gray-400 leading-relaxed">
+            Deploy generate-quiz and set <code className="rounded bg-gray-100 px-1 py-0.5 text-emerald-600">GEMINI_API_KEY</code> in Supabase secrets, or use the offline quiz.
           </p>
           <div className="mt-5 space-y-3">
             <button
@@ -202,7 +204,7 @@ export default function QuizModal({ video, onClose, onNavigate }) {
             </button>
             <button
               onClick={() => loadQuiz(false)}
-              className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] py-3 text-sm text-white/60 transition-all hover:bg-white/[0.08] hover:text-white"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 text-sm text-gray-600 transition-all hover:bg-gray-100 hover:text-gray-800"
             >
               Retry AI quiz
             </button>
@@ -213,45 +215,46 @@ export default function QuizModal({ video, onClose, onNavigate }) {
   }
 
   if (finished) {
-    const pct = Math.round((score / questions.length) * 100)
+    const pct = questions.length > 0 ? Math.round((score / questions.length) * 100) : 0
     return (
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-6"
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-6"
       >
         <motion.div
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="w-full max-w-sm max-h-[80vh] overflow-y-auto rounded-2xl border border-white/[0.08] bg-[#0a0a0a] p-6"
+          className="w-full max-w-sm max-h-[80vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white p-6 shadow-xl"
         >
           <div className="text-center mb-6">
-            <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/10">
-              <span className="text-2xl font-bold text-emerald-400">{pct}%</span>
+            <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
+              <span className="text-2xl font-bold text-emerald-500">{pct}%</span>
             </div>
-            <h3 className="text-xl font-bold text-white">Quiz complete</h3>
-            <p className="mt-1 text-sm text-white/50">
-              Score: <span className="text-emerald-400 font-semibold">{score}</span> / {questions.length}
+            <h3 className="text-xl font-bold text-gray-900">Quiz complete</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Score: <span className="text-emerald-500 font-semibold">{score}</span> / {questions.length}
             </p>
           </div>
 
           <div className="space-y-3 mb-6">
             {questions.map((q, i) => {
               const answer = answers[i]
+              if (!answer || !q) return null
               return (
-                <div key={i} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                  <p className="text-sm text-white/80">{q.question}</p>
+                <div key={i} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                  <p className="text-sm text-gray-700">{q.question}</p>
                   <div className="mt-1.5 flex items-center gap-1.5">
                     {answer.isCorrect ? (
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                     ) : (
-                      <XCircle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+                      <XCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />
                     )}
-                    <span className="text-xs text-white/40">Correct: {q.options[q.correctIndex]}</span>
+                    <span className="text-xs text-gray-400">Correct: {q.options?.[q.correctIndex] || 'N/A'}</span>
                   </div>
                   {q.explanation && (
-                    <p className="mt-1.5 text-xs text-white/30 leading-relaxed">{q.explanation}</p>
+                    <p className="mt-1.5 text-xs text-gray-400 leading-relaxed">{q.explanation}</p>
                   )}
                 </div>
               )
@@ -269,39 +272,78 @@ export default function QuizModal({ video, onClose, onNavigate }) {
     )
   }
 
+  // Safety check — if we somehow reach here with no questions, show a fallback
+  const currentQuestion = questions[currentIndex]
+  if (!currentQuestion) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-6"
+      >
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-xl"
+        >
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50">
+            <AlertCircle className="h-6 w-6 text-amber-500" />
+          </div>
+          <h3 className="text-lg font-bold text-gray-900">No quiz available</h3>
+          <p className="mt-2 text-sm text-gray-500">Could not load quiz questions for this video.</p>
+          <div className="mt-5 space-y-3">
+            <button
+              onClick={() => loadQuiz(true)}
+              className="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 py-3 text-sm font-semibold text-white"
+            >
+              Try offline quiz
+            </button>
+            <button
+              onClick={onClose}
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 text-sm text-gray-600"
+            >
+              Close
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    )
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm"
     >
       <motion.div
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="w-full max-w-sm rounded-t-2xl sm:rounded-2xl border border-white/[0.08] bg-[#0a0a0a] p-6"
+        className="w-full max-w-sm rounded-t-2xl sm:rounded-2xl border border-gray-200 bg-white p-6 shadow-xl"
       >
         <div className="mb-5 flex items-center justify-between">
           <div>
             {usedFallback && (
-              <span className="mb-1 flex items-center gap-1 text-xs text-amber-400/70">
+              <span className="mb-1 flex items-center gap-1 text-xs text-amber-500">
                 <WifiOff className="h-3 w-3" /> Offline quiz
               </span>
             )}
-            <h3 className="text-lg font-bold text-white">Quick quiz</h3>
-            <p className="text-xs text-white/40">{currentIndex + 1} / {questions.length}</p>
+            <h3 className="text-lg font-bold text-gray-900">Quick quiz</h3>
+            <p className="text-xs text-gray-400">{currentIndex + 1} / {questions.length}</p>
           </div>
           <button
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-white/40 transition-all hover:bg-white/[0.1] hover:text-white"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition-all hover:bg-gray-200 hover:text-gray-600"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="mb-5 h-1 overflow-hidden rounded-full bg-white/[0.06]">
+        <div className="mb-5 h-1 overflow-hidden rounded-full bg-gray-100">
           <motion.div
             className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
             initial={{ width: 0 }}
@@ -310,7 +352,7 @@ export default function QuizModal({ video, onClose, onNavigate }) {
           />
         </div>
 
-        <p className="text-white font-medium leading-relaxed mb-5">{currentQuestion.question}</p>
+        <p className="text-gray-900 font-medium leading-relaxed mb-5">{currentQuestion.question}</p>
 
         <div className="space-y-2.5 mb-5">
           {currentQuestion.options.map((option, i) => {
@@ -318,13 +360,13 @@ export default function QuizModal({ video, onClose, onNavigate }) {
             const isCorrect = i === currentQuestion.correctIndex
             const showResult = selectedIndex !== null
 
-            let optionClass = 'border-white/[0.08] bg-white/[0.03] text-white/70'
+            let optionClass = 'border-gray-200 bg-gray-50 text-gray-600'
             if (showResult && isCorrect) {
-              optionClass = 'border-emerald-500/50 bg-emerald-500/[0.08] text-emerald-300'
+              optionClass = 'border-emerald-400 bg-emerald-50 text-emerald-700'
             } else if (showResult && isSelected && !isCorrect) {
-              optionClass = 'border-red-500/50 bg-red-500/[0.08] text-red-300'
+              optionClass = 'border-red-400 bg-red-50 text-red-700'
             } else if (isSelected) {
-              optionClass = 'border-emerald-500/50 bg-emerald-500/[0.08] text-white'
+              optionClass = 'border-emerald-400 bg-emerald-50 text-gray-900'
             }
 
             return (
