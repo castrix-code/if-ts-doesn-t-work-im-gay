@@ -1,5 +1,5 @@
-import { supabase } from '../lib/supabase'
 import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabase'
 import { motion } from 'framer-motion'
 import { Compass, Flame, Filter } from 'lucide-react'
 
@@ -16,6 +16,7 @@ export default function Explore() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [searching, setSearching] = useState(false)
+
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([])
@@ -35,7 +36,8 @@ export default function Explore() {
     }, 300)
 
     return () => clearTimeout(timer)
-  }, [searchQuery])  
+  }, [searchQuery])
+
   return (
     <div className="min-h-screen bg-black px-4 pb-28 pt-6 sm:px-6">
       <div className="mx-auto max-w-2xl">
