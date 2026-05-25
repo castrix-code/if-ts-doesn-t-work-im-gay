@@ -33,13 +33,13 @@ const QUIZ_SCHEMA = `{
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders(req) })
   }
 
   try {
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
-      return jsonResponse({ error: 'Missing authorization header' }, 401)
+      return jsonResponse({ error: 'Missing authorization header' }, 401, req)
     }
 
     const supabase = createClient(
@@ -54,12 +54,12 @@ Deno.serve(async (req) => {
     } = await supabase.auth.getUser()
 
     if (userError || !user) {
-      return jsonResponse({ error: 'Unauthorized' }, 401)
+      return jsonResponse({ error: 'Unauthorized' }, 401, req)
     }
 
     const geminiKey = Deno.env.get('GEMINI_API_KEY')
     if (!geminiKey) {
-      return jsonResponse({ error: 'Gemini API key not configured' }, 500)
+      return jsonResponse({ error: 'Gemini API key not configured' }, 500, req)
     }
 
     const { title, description, videoId } = await req.json()
@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
       const safeTitle = String(title ?? '').slice(0, 200)
       const safeDescription = String(description ?? '').slice(0, 1000)
       if (!safeTitle.trim()) {
-        return jsonResponse({ error: 'Title is required' }, 400)
+        return jsonResponse({ error: 'Title is required' }, 400, req)
       }
     const prompt = `You are an educational quiz generator for the Atom learning app.
 Create exactly 4 multiple-choice questions about this educational video.
@@ -119,7 +119,7 @@ Rules:
     const rawText = extractGeminiText(geminiBody)
 
     if (!rawText) {
-      return jsonResponse({ error: lastError }, 500)
+      return jsonResponse({ error: lastError }, 500, req)
     }
 
     let quiz
@@ -128,13 +128,13 @@ Rules:
     } catch {
       const jsonMatch = rawText.match(/\{[\s\S]*\}/)
       if (!jsonMatch) {
-        return jsonResponse({ error: 'Invalid quiz format from AI' }, 500)
+        return jsonResponse({ error: 'Invalid quiz format from AI' }, 500, req)
       }
       quiz = JSON.parse(jsonMatch[0])
     }
 
     if (!Array.isArray(quiz.questions) || quiz.questions.length === 0) {
-      return jsonResponse({ error: 'Quiz had no questions' }, 500)
+      return jsonResponse({ error: 'Quiz had no questions' }, 500, req)
     }
 
     const questions = quiz.questions.slice(0, 5).map((q: Record<string, unknown>) => ({
@@ -147,6 +147,6 @@ Rules:
     return jsonResponse({ videoId, questions })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    return jsonResponse({ error: message }, 500)
+    return jsonResponse({ error: message }, 500, req)
   }
 })
