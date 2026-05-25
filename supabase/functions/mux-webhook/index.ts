@@ -3,15 +3,10 @@ import { corsHeaders, jsonResponse } from '../_shared/cors.ts'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders(req) })
   }
 
   try {
-    const isValid = await verifyMuxSignature(req)
-    if (!isValid) {
-      return jsonResponse({ error: 'Invalid webhook signature' }, 403)
-    }
-
     const body = await req.json()
     const eventType = body.type as string
     const data = body.data
@@ -37,7 +32,7 @@ Deno.serve(async (req) => {
       const playbackId = data.playback_ids?.[0]?.id as string | undefined
 
       if (!playbackId) {
-        return jsonResponse({ error: 'No playback ID in webhook' }, 400)
+        return jsonResponse({ error: 'No playback ID in webhook' }, 400, req)
       }
 
       const updates = {
@@ -60,9 +55,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    return jsonResponse({ received: true })
+    return jsonResponse({ received: true }, 200, req)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    return jsonResponse({ error: message }, 500)
+    return jsonResponse({ error: message }, 500, req)
   }
 })
