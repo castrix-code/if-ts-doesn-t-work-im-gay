@@ -241,7 +241,7 @@ function VideoCard({ video, isActive, onVideoEnded, onStartQuiz, onRemove, onRef
   }
 
   return (
-    <div className="h-screen snap-start relative bg-black overflow-hidden">
+    <div className="h-[100dvh] snap-start relative bg-black overflow-hidden">
       {playbackError ? null : (
         <>
 <MuxPlayer
@@ -253,9 +253,9 @@ function VideoCard({ video, isActive, onVideoEnded, onStartQuiz, onRemove, onRef
   style={{
   position: 'absolute',
   inset: 0,
-  height: '100%',
+  height: '120%',
   width: '100%',
-  minHeight: '100vh',
+  top: '-10%',
   '--controls': 'none',
   '--media-object-fit': 'cover',
   '--media-object-position': 'center',
